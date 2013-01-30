@@ -27,7 +27,7 @@ EOF
 ## Instalation:
 yum -y install epel-release
 yum -y update
-yum -y install tar gzip curl php-pear postgresql python patch lsof sudo  postgresql-server httpd php-pgsql php-gd php wget make redhat-lsb python-configobj  erlang rabbitmq-server liquidsoap ocaml ocaml-findlib.x86_64 libao libao-devel libmad libmad-devel taglib taglib-devel lame lame-devel libvorbis libvorbis-devel libtheora libtheora-devel pcre ocaml-camlp4  ocaml-camlp4-devel pcre pcre-devel gcc-c++ libX11 libX11-devel flac vorbis-tools  mp3gain monit php-bcmath
+yum -y install tar gzip curl php-pear postgresql python patch lsof sudo  postgresql-server httpd php-pgsql php-gd php wget make redhat-lsb python-configobj  erlang rabbitmq-server liquidsoap ocaml ocaml-findlib.x86_64 libao libao-devel libmad libmad-devel taglib taglib-devel lame lame-devel libvorbis libvorbis-devel libtheora libtheora-devel pcre ocaml-camlp4  ocaml-camlp4-devel pcre pcre-devel gcc-c++ libX11 libX11-devel flac vorbis-tools  mp3gain monit php-bcmath icecast
 
 
 
@@ -132,6 +132,9 @@ sudo -u airtime psql --file schema.sql airtime
 
 service httpd start
 chkconfig httpd on
+
+service icecast start
+chkconfig icecast on
 
 cd 
 rm -r $WDIR
