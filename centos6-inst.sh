@@ -27,7 +27,7 @@ EOF
 ## Instalation:
 yum -y install epel-release
 #yum -y update
-yum -y install tar gzip curl php-pear postgresql python patch lsof sudo  postgresql-server httpd php-pgsql php-gd php wget make redhat-lsb python-configobj  erlang rabbitmq-server liquidsoap ocaml ocaml-findlib.x86_64 libao libao-devel libmad libmad-devel taglib taglib-devel lame lame-devel libvorbis libvorbis-devel libtheora libtheora-devel pcre ocaml-camlp4  ocaml-camlp4-devel pcre pcre-devel gcc-c++ libX11 libX11-devel flac vorbis-tools  mp3gain monit php-bcmath icecast
+yum -y install tar gzip curl php-pear postgresql python patch lsof sudo  postgresql-server httpd php-pgsql php-gd php wget make redhat-lsb python-configobj  erlang rabbitmq-server liquidsoap ocaml ocaml-findlib.x86_64 libao libao-devel libmad libmad-devel taglib taglib-devel lame lame-devel libvorbis libvorbis-devel libtheora libtheora-devel pcre ocaml-camlp4  ocaml-camlp4-devel pcre pcre-devel gcc-c++ libX11 libX11-devel flac vorbis-tools  mp3gain monit php-bcmath icecast php-process
 
 
 
@@ -109,8 +109,13 @@ echo "psotgres configure"
 
 service postgresql initdb
 
-sed -i 's#host.*$#host    all         all         127.0.0.1/32          md5#g' /var/lib/pgsql/data/pg_hba.conf
-#sed -i 's#host.*$#host    all         all         ::1/128               md5#g' /var/lib/pgsql/data/pg_hba.conf
+mv /var/lib/pgsql/data/pg_hba.conf /var/lib/pgsql/data/pg_hba.conf.save
+
+echo"
+local   all         all                               ident
+host    all         all         127.0.0.1/32          md5
+host    all         all         ::1/128               md5
+" > /var/lib/pgsql/data/pg_hba.conf
 
 service postgresql start
 chkconfig postgresql on
@@ -140,6 +145,375 @@ chkconfig httpd on
 
 service icecast start
 chkconfig icecast on
+
+service rabbitmq-server start
+chkconfig rabbitmq-server on
+
+"LANG=en_US.UTF-8" > /etc/default/locale
+
+
+echo "Startup scripts configure"
+
+rm -f /etc/init.d/airtime-*
+cat << EOF > /etc/init.d/airtime-liquidsoap
+#!/bin/bash
+
+# airtime  liquidsoap        Start up the airtime-liquidsoap server daemon
+#
+# chkconfig: 2345 97 24
+# description: airtime media monitor
+#
+#
+# processname: airtime-media-monitor
+#
+
+
+### BEGIN INIT INFO
+# Provides:          airtime-liquidsoap
+# Required-Start:    $local_fs $remote_fs $network $syslog
+# Required-Stop:     $local_fs $remote_fs $network $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Liquidsoap daemon
+### END INIT INFO
+
+USERID=pypo
+GROUPID=pypo
+NAME="Liquidsoap Playout Engine"
+
+DAEMON=/usr/lib/airtime/pypo/bin/airtime-liquidsoap
+PIDFILE=/var/run/airtime-liquidsoap.pid
+
+start () {
+        chown pypo:pypo /var/log/airtime/pypo
+        chown pypo:pypo /var/log/airtime/pypo-liquidsoap
+
+#        start-stop-daemon --start --background --quiet --chuid $USERID:$GROUPID \
+#        --nicelevel -15 --make-pidfile --pidfile $PIDFILE --startas $DAEMON
+
+        PID=`su  pypo -c $DAEMON > /dev/null 2>&1 & echo $!`
+        echo "PID=$PID"
+        if [ -z $PID ]; then
+            printf "%s\n" "Fail"
+        else
+            echo $PID > $PIDFILE
+            printf "%s\n" "Ok"
+        fi
+
+        monit monitor airtime-liquidsoap >/dev/null 2>&1
+}
+
+stop () {
+        monit unmonitor airtime-liquidsoap >/dev/null 2>&1
+        /usr/lib/airtime/airtime_virtualenv/bin/python /usr/lib/airtime/pypo/bin/liquidsoap_scripts/liquidsoap_prepare_terminate.py
+
+        # Send TERM after 5 seconds, wait at most 30 seconds.
+#        start-stop-daemon --stop --oknodo --retry 5 --quiet --pidfile $PIDFILE
+#        rm -f $PIDFILE
+        printf "\n %-50s" "Stopping $NAME"
+        if [ -f $PIDFILE ]; then
+            PID=`cat $PIDFILE`
+            kill  $PID
+            printf "%s\n" "Ok"
+            rm -f $PIDFILE
+        else
+                    printf "%s\n" "pidfile not found"
+        fi
+        rm -f $PIDFILE
+
+
+
+}
+
+start_no_monit() {
+        chown pypo:pypo /etc/airtime
+        chown pypo:pypo /etc/airtime/liquidsoap.cfg
+        PID=`su  pypo -c $DAEMON > /dev/null 2>&1 & echo $!`
+        echo "PID=$PID"
+        if [ -z $PID ]; then
+            printf "%s\n" "Fail"
+        else
+            echo $PID > $PIDFILE
+            printf "%s\n" "Ok"
+        fi
+}
+
+
+case "${1:-''}" in
+  'stop')
+           echo -n "Stopping Liquidsoap: "
+           stop
+           echo "Done."
+        ;;
+  'start')
+           echo -n "Starting Liquidsoap: "
+           start
+           echo "Done."
+        ;;
+  'restart')
+           # restart commands here
+           echo -n "Restarting Liquidsoap: "
+           stop
+           start
+           echo "Done."
+        ;;
+
+  'status')
+        if [ -f "$PIDFILE" ]; then
+            pid=`cat /var/run/airtime-liquidsoap.pid`
+            if [ -d "/proc/$pid" ]; then
+                echo "Liquidsoap is running"
+                exit 0
+            fi
+        fi
+        echo "Liquidsoap is not running"
+        exit 1
+        ;;
+  'start-no-monit')
+           # restart commands here
+           echo -n "Starting $NAME: "
+           start_no_monit
+           echo "Done."
+        ;;
+
+  *)      # no parameter specified
+        echo "Usage: $SELF start|stop|restart"
+        exit 1
+        ;;
+
+esac
+EOF
+
+cat << EOF > /etc/init.d/airtime-playout
+#!/bin/bash
+
+# airtime  playout        Start up the airtime-playout server daemon
+#
+# chkconfig: 2345 96 24
+# description: airtime media monitor
+#
+#
+# processname: airtime-media-monitor
+#
+
+### BEGIN INIT INFO
+# Provides:          airtime-playout
+# Required-Start:    $local_fs $remote_fs $network $syslog
+# Required-Stop:     $local_fs $remote_fs $network $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Manage airtime-playout daemon
+### END INIT INFO
+
+USERID=root
+NAME="Airtime Scheduler Engine"
+
+DAEMON=/usr/lib/airtime/pypo/bin/airtime-playout
+PIDFILE=/var/run/airtime-playout.pid
+
+start () {
+        printf "%-50s" "Starting $NAME..."
+        chown pypo:pypo /etc/airtime
+        chown pypo:pypo /etc/airtime/liquidsoap.cfg
+
+#        start-stop-daemon --start --background --quiet --chuid $USERID:$USERID --make-pidfile --pidfile $PIDFILE --startas $DAEMON
+        PID=`su  pypo -c $DAEMON > /dev/null 2>&1 & echo $!`
+        echo "PID=$PID"
+        if [ -z $PID ]; then
+            printf "%s\n" "Fail"
+        else
+            echo $PID > $PIDFILE
+            printf "%s\n" "Ok"
+        fi
+
+        monit monitor airtime-playout >/dev/null 2>&1
+}
+
+stop () {
+        monit unmonitor airtime-playout >/dev/null 2>&1
+        printf "\n %-50s" "Stopping $NAME"
+        if [ -f $PIDFILE ]; then
+            PID=`cat $PIDFILE`
+            kill  $PID
+            printf "%s\n" "Ok"
+            rm -f $PIDFILE
+        else
+                    printf "%s\n" "pidfile not found"
+        fi
+        rm -f $PIDFILE
+
+}
+
+start_no_monit() {
+        chown pypo:pypo /etc/airtime
+        chown pypo:pypo /etc/airtime/liquidsoap.cfg
+        PID=`su  pypo -c $DAEMON > /dev/null 2>&1 & echo $!`
+        echo "PID=$PID"
+        if [ -z $PID ]; then
+            printf "%s\n" "Fail"
+        else
+            echo $PID > $PIDFILE
+            printf "%s\n" "Ok"
+        fi
+}
+
+case "${1:-''}" in
+  'start')
+            # start commands here
+            echo -n "Starting $NAME: "
+            start
+            echo "Done."
+        ;;
+  'stop')
+            # stop commands here
+            echo -n "Stopping $NAME: "
+            stop
+            echo "Done."
+        ;;
+  'restart')
+           # restart commands here
+           echo -n "Restarting $NAME: "
+           stop
+           start
+           echo "Done."
+        ;;
+  'start-no-monit')
+           # restart commands here
+           echo -n "Starting $NAME: "
+           start_no_monit
+           echo "Done."
+        ;;
+  'status')
+           # status commands here
+           /usr/lib/airtime/utils/airtime-check-system
+        ;;
+  *)      # no parameter specified
+        echo "Usage: $SELF start|stop|restart|status"
+        exit 1
+        ;;
+
+esac
+EOF
+
+cat << EOF > /etc/init.d/airtime-media-monitor
+#!/bin/bash
+# airtime-media-monitor          Start up the airtime-media-monitor server daemon
+#
+# chkconfig: 2345 95 25
+# description: airtime media monitor
+#
+#
+# processname: airtime-media-monitor
+#
+### BEGIN INIT INFO
+# Provides:          airtime-media-monitor
+# Required-Start:    $local_fs $remote_fs $network $syslog
+# Required-Stop:     $local_fs $remote_fs $network $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Manage airtime-media-monitor daemon
+### END INIT INFO
+
+. /etc/init.d/functions
+
+SCRIPTNAME=/etc/init.d/airtime-media-monitor
+USERID=root
+GROUPID=www-data
+NAME=Airtime\ Media\ Monitor
+
+DAEMON=/usr/lib/airtime/media-monitor/airtime-media-monitor
+PIDFILE=/var/run/airtime-media-monitor.pid
+
+start () {
+        PID=`$DAEMON > /dev/null 2>&1 & echo $!`
+        RETVAL=$?
+        monit monitor airtime-media-monitor >/dev/null 2>&1
+#       echo
+#        return $RETVAL
+        echo "PID=$PID"
+        if [ -z $PID ]; then
+            printf "%s\n" "Fail"
+        else
+            echo $PID > $PIDFILE
+            printf "%s\n" "Ok"
+        fi
+}
+
+stop () {
+        monit unmonitor airtime-media-monitor >/dev/null 2>&1
+        printf "%-50s" "Stopping $NAME"
+        if [ -f $PIDFILE ]; then
+            PID=`cat $PIDFILE`
+            kill -HUP $PID
+            printf "%s\n" "Ok"
+            rm -f $PIDFILE
+        else
+                    printf "%s\n" "pidfile not found"
+        fi
+        rm -f $PIDFILE
+}
+
+start_no_monit() {
+        PID=`su $USERID:$GROUPID -c $DAEMON > /dev/null 2>&1 & echo $!`
+        RETVAL=$?
+        echo
+        return $RETVAL
+        if [ -z $PID ]; then
+            printf "%s\n" "Fail"
+        else
+            echo $PID > $PIDFILE
+            printf "%s\n" "Ok"
+        fi
+}
+
+
+case "${1:-''}" in
+  'start')
+            # start commands here
+            echo -n "Starting $NAME: "
+            start
+            echo "Done."
+        ;;
+  'stop')
+            # stop commands here
+            echo -n "Stopping $NAME: "
+            stop
+            echo "Done."
+        ;;
+  'restart')
+           # restart commands here
+           echo -n "Restarting $NAME: "
+           stop
+           start
+           echo "Done."
+        ;;
+  'start-no-monit')
+           # restart commands here
+           echo -n "Starting $NAME: "
+           start_no_monit
+           echo "Done."
+        ;;
+  'status')
+           # status commands here
+           #/usr/bin/airtime-check-system
+           /usr/lib/airtime/utils/airtime-check-system
+        ;;
+  *)      # no parameter specified
+        echo "Usage: $SELF start|stop|restart|status"
+        exit 1
+        ;;
+esac
+EOF
+
+
+for i in airtime-media-monitor airtime-playout airtime-liquidsoap ; do 
+	service $i start;
+	chkconfig $i on;
+done
+
+
+
+
 
 cd 
 rm -r $WDIR
