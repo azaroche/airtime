@@ -26,7 +26,7 @@ EOF
 
 ## Instalation:
 yum -y install epel-release
-yum -y update
+#yum -y update
 yum -y install tar gzip curl php-pear postgresql python patch lsof sudo  postgresql-server httpd php-pgsql php-gd php wget make redhat-lsb python-configobj  erlang rabbitmq-server liquidsoap ocaml ocaml-findlib.x86_64 libao libao-devel libmad libmad-devel taglib taglib-devel lame lame-devel libvorbis libvorbis-devel libtheora libtheora-devel pcre ocaml-camlp4  ocaml-camlp4-devel pcre pcre-devel gcc-c++ libX11 libX11-devel flac vorbis-tools  mp3gain monit php-bcmath icecast
 
 
@@ -91,8 +91,8 @@ chown apache:  /var/log/airtime/zendphp.log
 ##Configure external packages:
 
 #Monit:
-#mkdir -p /etc/monit/conf.d
-#    echo "include /etc/monit/conf.d/*" > /etc/monit.d/monit
+mkdir -p /etc/monit/conf.d
+    echo "include /etc/monit/conf.d/*" > /etc/monit.d/monit
 #!!! Not need!! (may be)
 
 
@@ -103,6 +103,10 @@ phar.readonly = Off" >> /etc/php.ini
 
 
 #Configure (create databases) postgres:
+
+echo "psotgres configure"
+
+service postgresql initdb
 
 sed -i 's#host.*$#host    all         all         127.0.0.1/32          md5#g' /var/lib/pgsql/data/pg_hba.conf
 #sed -i 's#host.*$#host    all         all         ::1/128               md5#g' /var/lib/pgsql/data/pg_hba.conf
