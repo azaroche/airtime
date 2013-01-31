@@ -66,6 +66,7 @@ cp -R $WDIR/airtime-2.2.1/airtime_mvc/* /var/www/html/airtime/
 
 ##Configure AirTime:
 adduser --system --user-group airtime
+adduser --system --user-group pypo
 
 mkdir -p /etc/airtime
 mkdir -p /srv/airtime/stor
