@@ -111,7 +111,7 @@ service postgresql initdb
 
 mv /var/lib/pgsql/data/pg_hba.conf /var/lib/pgsql/data/pg_hba.conf.save
 
-echo"
+echo "
 local   all         all                               ident
 host    all         all         127.0.0.1/32          md5
 host    all         all         ::1/128               md5
@@ -149,12 +149,16 @@ chkconfig icecast on
 service rabbitmq-server start
 chkconfig rabbitmq-server on
 
-"LANG=en_US.UTF-8" > /etc/default/locale
+echo "LANG=en_US.UTF-8" > /etc/default/locale
 
 
-echo "Startup scripts configure"
+echo "Startup scripts configure";
+echo "remove drbian scripts"
 
 rm -f /etc/init.d/airtime-*
+
+echo "write rhel scripts airtime-liquidsoap";
+
 cat << EOF > /etc/init.d/airtime-liquidsoap
 #!/bin/bash
 
@@ -282,7 +286,11 @@ case "${1:-''}" in
         ;;
 
 esac
+
 EOF
+
+echo "write rhel scripts airtime-playout";
+
 
 cat << EOF > /etc/init.d/airtime-playout
 #!/bin/bash
@@ -395,6 +403,8 @@ case "${1:-''}" in
 esac
 EOF
 
+echo "write rhel scripts media-monitor";
+
 cat << EOF > /etc/init.d/airtime-media-monitor
 #!/bin/bash
 # airtime-media-monitor          Start up the airtime-media-monitor server daemon
@@ -505,6 +515,7 @@ case "${1:-''}" in
 esac
 EOF
 
+echo "start airtime sevices";
 
 for i in airtime-media-monitor airtime-playout airtime-liquidsoap ; do 
 	service $i start;
