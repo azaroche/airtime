@@ -518,6 +518,7 @@ EOF
 echo "start airtime sevices";
 
 for i in airtime-media-monitor airtime-playout airtime-liquidsoap ; do 
+	chmod +x /etc/init.d/$i
 	service $i start;
 	chkconfig $i on;
 done
