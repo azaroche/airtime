@@ -169,10 +169,10 @@ cat << EOF > /etc/init.d/airtime-liquidsoap
 # airtime  liquidsoap        Start up the airtime-liquidsoap server daemon
 #
 # chkconfig: 2345 97 24
-# description: airtime media monitor
+# description: airtiime liquidsoap
 #
 #
-# processname: airtime-media-monitor
+# processname: airtime-liquidsoap
 #
 
 
@@ -195,7 +195,8 @@ PIDFILE=/var/run/airtime-liquidsoap.pid
 start () {
         chown pypo:pypo /var/log/airtime/pypo
         chown pypo:pypo /var/log/airtime/pypo-liquidsoap
-
+	setenforce 0
+	
 
         PID=\`su  pypo -c \$DAEMON > /dev/null 2>&1 & echo \$!\`
         echo "PID=\$PID"
@@ -296,10 +297,10 @@ cat << EOF > /etc/init.d/airtime-playout
 # airtime  playout        Start up the airtime-playout server daemon
 #
 # chkconfig: 2345 96 24
-# description: airtime media monitor
+# description: airtime playout
 #
 #
-# processname: airtime-media-monitor
+# processname: airtime-playout
 #
 
 ### BEGIN INIT INFO
@@ -321,6 +322,8 @@ start () {
         printf "%-50s" "Starting \$NAME..."
         chown pypo:pypo /etc/airtime
         chown pypo:pypo /etc/airtime/liquidsoap.cfg
+
+	setenforce 0
 
         PID=\`su  pypo -c \$DAEMON > /dev/null 2>&1 & echo \$!\`
         echo "PID=\$PID"
