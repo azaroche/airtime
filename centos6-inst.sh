@@ -88,6 +88,7 @@ sed -i "s/api_key = .*$/api_key = \'$rand\'/g"   /etc/airtime/api_client.cfg
 touch  /var/log/airtime/zendphp.log
 chown apache:  /var/log/airtime/zendphp.log
 
+cp -r $WDIR/airtime-2.2.1/utils /usr/lib/airtime/utils/
 
 ##Configure external packages:
 
