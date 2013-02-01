@@ -1,3 +1,6 @@
+#/bin/sh!
+PW=`pwd`;
+
 #create workdir
 WDIR=`mktemp -d`
 chmod 755 $WDIR/
@@ -10,7 +13,7 @@ cat << EOF > /etc/yum.repos.d/ext.repo
 [extrnal-zar]
 name=external repo
 failovermethod=priority
-baseurl=http://alice03.spbu.ru/alice/grid/lcg/soft/external.repo/
+baseurl=file://$PW/external.repo/
 enabled=1
 gpgcheck=0
 EOF
@@ -19,7 +22,7 @@ cat << EOF > /etc/yum.repos.d/airtime.repo
 [denis-lc]
 name=airtime (denis linuxcenter)  
 failovermethod=priority 
-baseurl=http://alice03.spbu.ru/alice/grid/lcg/soft/airtime/x86_64/
+baseurl=file://$PW/airtime/x86_64/
 enabled=1
 gpgcheck=0
 EOF
