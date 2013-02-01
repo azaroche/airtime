@@ -117,7 +117,10 @@ host    all         all         127.0.0.1/32          md5
 host    all         all         ::1/128               md5
 " > /var/lib/pgsql/data/pg_hba.conf
 
+service postgresql stop
+
 service postgresql start
+
 chkconfig postgresql on
 
 sudo -u postgres psql -c "CREATE USER airtime ENCRYPTED PASSWORD 'airtime' LOGIN CREATEDB NOCREATEUSER;"
@@ -174,8 +177,8 @@ cat << EOF > /etc/init.d/airtime-liquidsoap
 
 ### BEGIN INIT INFO
 # Provides:          airtime-liquidsoap
-# Required-Start:    $local_fs $remote_fs $network $syslog
-# Required-Stop:     $local_fs $remote_fs $network $syslog
+# Required-Start:    \$local_fs \$remote_fs \$network \$syslog
+# Required-Stop:     \$local_fs \$remote_fs \$network \$syslog
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
 # Short-Description: Liquidsoap daemon
@@ -192,15 +195,13 @@ start () {
         chown pypo:pypo /var/log/airtime/pypo
         chown pypo:pypo /var/log/airtime/pypo-liquidsoap
 
-#        start-stop-daemon --start --background --quiet --chuid $USERID:$GROUPID \
-#        --nicelevel -15 --make-pidfile --pidfile $PIDFILE --startas $DAEMON
 
-        PID=`su  pypo -c $DAEMON > /dev/null 2>&1 & echo $!`
-        echo "PID=$PID"
-        if [ -z $PID ]; then
+        PID=\`su  pypo -c \$DAEMON > /dev/null 2>&1 & echo \$!\`
+        echo "PID=\$PID"
+        if [ -z \$PID ]; then
             printf "%s\n" "Fail"
         else
-            echo $PID > $PIDFILE
+            echo \$PID > \$PIDFILE
             printf "%s\n" "Ok"
         fi
 
@@ -210,20 +211,16 @@ start () {
 stop () {
         monit unmonitor airtime-liquidsoap >/dev/null 2>&1
         /usr/lib/airtime/airtime_virtualenv/bin/python /usr/lib/airtime/pypo/bin/liquidsoap_scripts/liquidsoap_prepare_terminate.py
-
-        # Send TERM after 5 seconds, wait at most 30 seconds.
-#        start-stop-daemon --stop --oknodo --retry 5 --quiet --pidfile $PIDFILE
-#        rm -f $PIDFILE
-        printf "\n %-50s" "Stopping $NAME"
-        if [ -f $PIDFILE ]; then
-            PID=`cat $PIDFILE`
-            kill  $PID
+        printf "\n %-50s" "Stopping \$NAME"
+        if [ -f \$PIDFILE ]; then
+            PID=\`cat \$PIDFILE\`
+            kill  \$PID
             printf "%s\n" "Ok"
-            rm -f $PIDFILE
+            rm -f \$PIDFILE
         else
                     printf "%s\n" "pidfile not found"
         fi
-        rm -f $PIDFILE
+        rm -f \$PIDFILE
 
 
 
@@ -232,18 +229,18 @@ stop () {
 start_no_monit() {
         chown pypo:pypo /etc/airtime
         chown pypo:pypo /etc/airtime/liquidsoap.cfg
-        PID=`su  pypo -c $DAEMON > /dev/null 2>&1 & echo $!`
-        echo "PID=$PID"
-        if [ -z $PID ]; then
+        PID=\`su  pypo -c \$DAEMON > /dev/null 2>&1 & echo \$!\`
+        echo "PID=\$PID"
+        if [ -z \$PID ]; then
             printf "%s\n" "Fail"
         else
-            echo $PID > $PIDFILE
+            echo \$PID > \$PIDFILE
             printf "%s\n" "Ok"
         fi
 }
 
 
-case "${1:-''}" in
+case "\${1:-''}" in
   'stop')
            echo -n "Stopping Liquidsoap: "
            stop
@@ -263,9 +260,9 @@ case "${1:-''}" in
         ;;
 
   'status')
-        if [ -f "$PIDFILE" ]; then
-            pid=`cat /var/run/airtime-liquidsoap.pid`
-            if [ -d "/proc/$pid" ]; then
+        if [ -f "\$PIDFILE" ]; then
+            pid=\`cat /var/run/airtime-liquidsoap.pid\`
+            if [ -d "/proc/\$pid" ]; then
                 echo "Liquidsoap is running"
                 exit 0
             fi
@@ -275,13 +272,13 @@ case "${1:-''}" in
         ;;
   'start-no-monit')
            # restart commands here
-           echo -n "Starting $NAME: "
+           echo -n "Starting \$NAME: "
            start_no_monit
            echo "Done."
         ;;
 
   *)      # no parameter specified
-        echo "Usage: $SELF start|stop|restart"
+        echo "Usage: \$SELF start|stop|restart"
         exit 1
         ;;
 
@@ -306,8 +303,8 @@ cat << EOF > /etc/init.d/airtime-playout
 
 ### BEGIN INIT INFO
 # Provides:          airtime-playout
-# Required-Start:    $local_fs $remote_fs $network $syslog
-# Required-Stop:     $local_fs $remote_fs $network $syslog
+# Required-Start:    \$local_fs \$remote_fs \$network \$syslog
+# Required-Stop:     \$local_fs \$remote_fs \$network \$syslog
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
 # Short-Description: Manage airtime-playout daemon
@@ -320,17 +317,16 @@ DAEMON=/usr/lib/airtime/pypo/bin/airtime-playout
 PIDFILE=/var/run/airtime-playout.pid
 
 start () {
-        printf "%-50s" "Starting $NAME..."
+        printf "%-50s" "Starting \$NAME..."
         chown pypo:pypo /etc/airtime
         chown pypo:pypo /etc/airtime/liquidsoap.cfg
 
-#        start-stop-daemon --start --background --quiet --chuid $USERID:$USERID --make-pidfile --pidfile $PIDFILE --startas $DAEMON
-        PID=`su  pypo -c $DAEMON > /dev/null 2>&1 & echo $!`
-        echo "PID=$PID"
-        if [ -z $PID ]; then
+        PID=\`su  pypo -c \$DAEMON > /dev/null 2>&1 & echo \$!\`
+        echo "PID=\$PID"
+        if [ -z \$PID ]; then
             printf "%s\n" "Fail"
         else
-            echo $PID > $PIDFILE
+            echo \$PID > \$PIDFILE
             printf "%s\n" "Ok"
         fi
 
@@ -339,55 +335,55 @@ start () {
 
 stop () {
         monit unmonitor airtime-playout >/dev/null 2>&1
-        printf "\n %-50s" "Stopping $NAME"
-        if [ -f $PIDFILE ]; then
-            PID=`cat $PIDFILE`
-            kill  $PID
+        printf "\n %-50s" "Stopping \$NAME"
+        if [ -f \$PIDFILE ]; then
+            PID=\`cat \$PIDFILE\`
+            kill  \$PID
             printf "%s\n" "Ok"
-            rm -f $PIDFILE
+            rm -f \$PIDFILE
         else
                     printf "%s\n" "pidfile not found"
         fi
-        rm -f $PIDFILE
+        rm -f \$PIDFILE
 
 }
 
 start_no_monit() {
         chown pypo:pypo /etc/airtime
         chown pypo:pypo /etc/airtime/liquidsoap.cfg
-        PID=`su  pypo -c $DAEMON > /dev/null 2>&1 & echo $!`
-        echo "PID=$PID"
-        if [ -z $PID ]; then
+        PID=\`su  pypo -c \$DAEMON > /dev/null 2>&1 & echo \$!\`
+        echo "PID=\$PID"
+        if [ -z \$PID ]; then
             printf "%s\n" "Fail"
         else
-            echo $PID > $PIDFILE
+            echo \$PID > \$PIDFILE
             printf "%s\n" "Ok"
         fi
 }
 
-case "${1:-''}" in
+case "\${1:-''}" in
   'start')
             # start commands here
-            echo -n "Starting $NAME: "
+            echo -n "Starting \$NAME: "
             start
             echo "Done."
         ;;
   'stop')
             # stop commands here
-            echo -n "Stopping $NAME: "
+            echo -n "Stopping \$NAME: "
             stop
             echo "Done."
         ;;
   'restart')
            # restart commands here
-           echo -n "Restarting $NAME: "
+           echo -n "Restarting \$NAME: "
            stop
            start
            echo "Done."
         ;;
   'start-no-monit')
            # restart commands here
-           echo -n "Starting $NAME: "
+           echo -n "Starting \$NAME: "
            start_no_monit
            echo "Done."
         ;;
@@ -396,7 +392,7 @@ case "${1:-''}" in
            /usr/lib/airtime/utils/airtime-check-system
         ;;
   *)      # no parameter specified
-        echo "Usage: $SELF start|stop|restart|status"
+        echo "Usage: \$SELF start|stop|restart|status"
         exit 1
         ;;
 
@@ -417,8 +413,8 @@ cat << EOF > /etc/init.d/airtime-media-monitor
 #
 ### BEGIN INIT INFO
 # Provides:          airtime-media-monitor
-# Required-Start:    $local_fs $remote_fs $network $syslog
-# Required-Stop:     $local_fs $remote_fs $network $syslog
+# Required-Start:    \$local_fs \$remote_fs \$network \$syslog
+# Required-Stop:     \$local_fs \$remote_fs \$network \$syslog
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
 # Short-Description: Manage airtime-media-monitor daemon
@@ -435,71 +431,71 @@ DAEMON=/usr/lib/airtime/media-monitor/airtime-media-monitor
 PIDFILE=/var/run/airtime-media-monitor.pid
 
 start () {
-        PID=`$DAEMON > /dev/null 2>&1 & echo $!`
-        RETVAL=$?
+        PID=\`\$DAEMON > /dev/null 2>&1 & echo \$!\`
+        RETVAL=\$?
         monit monitor airtime-media-monitor >/dev/null 2>&1
 #       echo
-#        return $RETVAL
-        echo "PID=$PID"
-        if [ -z $PID ]; then
+#        return \$RETVAL
+        echo "PID=\$PID"
+        if [ -z \$PID ]; then
             printf "%s\n" "Fail"
         else
-            echo $PID > $PIDFILE
+            echo \$PID > \$PIDFILE
             printf "%s\n" "Ok"
         fi
 }
 
 stop () {
         monit unmonitor airtime-media-monitor >/dev/null 2>&1
-        printf "%-50s" "Stopping $NAME"
-        if [ -f $PIDFILE ]; then
-            PID=`cat $PIDFILE`
-            kill -HUP $PID
+        printf "%-50s" "Stopping \$NAME"
+        if [ -f \$PIDFILE ]; then
+            PID=\`cat \$PIDFILE\`
+            kill -HUP \$PID
             printf "%s\n" "Ok"
-            rm -f $PIDFILE
+            rm -f \$PIDFILE
         else
                     printf "%s\n" "pidfile not found"
         fi
-        rm -f $PIDFILE
+        rm -f \$PIDFILE
 }
 
 start_no_monit() {
-        PID=`su $USERID:$GROUPID -c $DAEMON > /dev/null 2>&1 & echo $!`
-        RETVAL=$?
+        PID=\`su \$USERID:\$GROUPID -c \$DAEMON > /dev/null 2>&1 & echo \$!\`
+        RETVAL=\$?
         echo
-        return $RETVAL
-        if [ -z $PID ]; then
+        return \$RETVAL
+        if [ -z \$PID ]; then
             printf "%s\n" "Fail"
         else
-            echo $PID > $PIDFILE
+            echo \$PID > \$PIDFILE
             printf "%s\n" "Ok"
         fi
 }
 
 
-case "${1:-''}" in
+case "\${1:-''}" in
   'start')
             # start commands here
-            echo -n "Starting $NAME: "
+            echo -n "Starting \$NAME: "
             start
             echo "Done."
         ;;
   'stop')
             # stop commands here
-            echo -n "Stopping $NAME: "
+            echo -n "Stopping \$NAME: "
             stop
             echo "Done."
         ;;
   'restart')
            # restart commands here
-           echo -n "Restarting $NAME: "
+           echo -n "Restarting \$NAME: "
            stop
            start
            echo "Done."
         ;;
   'start-no-monit')
            # restart commands here
-           echo -n "Starting $NAME: "
+           echo -n "Starting \$NAME: "
            start_no_monit
            echo "Done."
         ;;
@@ -509,7 +505,7 @@ case "${1:-''}" in
            /usr/lib/airtime/utils/airtime-check-system
         ;;
   *)      # no parameter specified
-        echo "Usage: $SELF start|stop|restart|status"
+        echo "Usage: \$SELF start|stop|restart|status"
         exit 1
         ;;
 esac
