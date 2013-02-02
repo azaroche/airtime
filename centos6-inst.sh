@@ -73,6 +73,7 @@ adduser --system --user-group pypo
 
 mkdir -p /etc/airtime
 mkdir -p /srv/airtime/stor
+mkdir -p /var/log/airtime
 
 cp $WDIR/airtime-2.2.1/airtime_mvc/build/airtime.conf /etc/airtime/airtime.conf
 
@@ -90,7 +91,7 @@ python $WDIR/airtime-2.2.1/python_apps/pypo/install/pypo-initialize.py
 sed -i "s/api_key = .*$/api_key = \'$rand\'/g"   /etc/airtime/api_client.cfg
 touch  /var/log/airtime/zendphp.log
 chown apache:  /var/log/airtime/zendphp.log
-chown -R  apache: /srv/airtime/stor
+#chown -R  apache: /srv/airtime/stor
 
 cp -r $WDIR/airtime-2.2.1/utils /usr/lib/airtime/utils/
 
@@ -529,6 +530,8 @@ done
 
 
 
+
+chown -R  apache: /srv/airtime/stor
 
 
 cd 
