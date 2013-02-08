@@ -562,7 +562,8 @@ done
 
 
 
-echo "chown -R  apache: /srv/airtime/stor";
+echo "chown -R  apache: /srv/airtime/stor after 5 s";
+sleep 5
 chown -R apache: /srv/airtime/stor
 
 }
